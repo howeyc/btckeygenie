@@ -21,6 +21,8 @@ import (
 
 var secp256k1 EllipticCurve
 
+var VERSION uint8 = 0x00
+
 func init() {
 	/* See Certicom's SEC2 2.7.1, pg.15 */
 	/* secp256k1 elliptic curve parameters */
@@ -251,8 +253,8 @@ func CheckWIF(wif string) (valid bool, err error) {
 	}
 
 	/* Check that the version byte is 0x80 */
-	if ver != 0x80 {
-		return false, fmt.Errorf("Invalid WIF version 0x%02x, expected 0x80.", ver)
+	if ver != 0x80+VERSION {
+		return false, fmt.Errorf("Invalid WIF version 0x%02x, expected 0x$02x.", ver, VERSION+0x80)
 	}
 
 	/* Check that private key bytes length is 32 or 33 */
@@ -300,7 +302,7 @@ func (priv *PrivateKey) ToWIF() (wif string) {
 	priv_bytes := priv.ToBytes()
 
 	/* Convert bytes to base-58 check encoded string with version 0x80 */
-	wif = b58checkencode(0x80, priv_bytes)
+	wif = b58checkencode(0x80+VERSION, priv_bytes)
 
 	return wif
 }
@@ -316,7 +318,7 @@ func (priv *PrivateKey) ToWIFC() (wifc string) {
 	priv_bytes = append(priv_bytes, []byte{0x01}...)
 
 	/* Convert bytes to base-58 check encoded string with version 0x80 */
-	wifc = b58checkencode(0x80, priv_bytes)
+	wifc = b58checkencode(0x80+VERSION, priv_bytes)
 
 	return wifc
 }
@@ -332,8 +334,8 @@ func (priv *PrivateKey) FromWIF(wif string) (err error) {
 	}
 
 	/* Check that the version byte is 0x80 */
-	if ver != 0x80 {
-		return fmt.Errorf("Invalid WIF version 0x%02x, expected 0x80.", ver)
+	if ver != 0x80+VERSION {
+		return fmt.Errorf("Invalid WIF version 0x%02x, expected 0x%02x.", ver, 0x80+VERSION)
 	}
 
 	/* If the private key bytes length is 33, check that suffix byte is 0x01 (for compression) and strip it off */
@@ -457,7 +459,7 @@ func (pub *PublicKey) ToAddress() (address string) {
 	pub_hash_2 := ripemd160_h.Sum(nil)
 
 	/* Convert hash bytes to base58 check encoded sequence */
-	address = b58checkencode(0x00, pub_hash_2)
+	address = b58checkencode(VERSION, pub_hash_2)
 
 	return address
 }
@@ -482,7 +484,7 @@ func (pub *PublicKey) ToAddressUncompressed() (address string) {
 	pub_hash_2 := ripemd160_h.Sum(nil)
 
 	/* Convert hash bytes to base58 check encoded sequence */
-	address = b58checkencode(0x00, pub_hash_2)
+	address = b58checkencode(VERSION, pub_hash_2)
 
 	return address
 }
